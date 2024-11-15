@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Render } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Render } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Sutemeny } from './sutemeny';
 import { CreateSutemenyDto } from './create-sutemeny.dto';
@@ -54,7 +54,12 @@ export class AppController {
 
   @Delete('sutik/:sutiid')
   sutiTorles(@Param('sutiid') id: string){
-    this.sutik.splice( this.sutik.findIndex(suti => suti.id == parseInt(id)));
+    const idx = this.sutik.findIndex(suti => suti.id == parseInt(id));
+    if(idx == -1){
+      throw new BadRequestException("Nem letezik a suti amit torolni szeretnel!");
+    }
+    
+    return this.sutik.splice(idx,1);
   }
 
   @Get('sutiKereses')
@@ -87,5 +92,33 @@ export class AppController {
 
     this.sutik[eredetiSutiID] = ujsuti;
     return ujsuti;
+  }
+
+  @Get('abc')
+  abcSorrend(){
+    return this.sutik.toSorted((suti1, suti2) => 
+      suti1.nev.toLocaleLowerCase().localeCompare(suti2.nev.toLocaleLowerCase()));
+  }
+
+  @Get('keszleten')
+  keszleten(){
+    return this.sutik.filter(suti => suti.db != 0);
+  }
+
+  @Post('ujSutiGyors')
+  ujSutiGyors(@Body() ujSutiAdatok: CreateSutemenyDto){
+    if(ujSutiAdatok.nev.length == 0 || typeof ujSutiAdatok.nev != 'string'){
+      throw new BadRequestException("Nem megfelelo suti nev!");
+    }
+
+    const ujSuti: Sutemeny = {
+      ...ujSutiAdatok,
+      laktozMentes: false,
+      db: 1,
+      id: this.nextID++,
+    };
+
+    this.sutik.push(ujSuti);
+    return 'Uj sutemeny letrehozva!';
   }
 }
