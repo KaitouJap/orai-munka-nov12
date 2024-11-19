@@ -83,8 +83,9 @@ export class AppController {
   @Patch('sutiModositas/:sutiid')
   sutiModositas(@Param('sutiid') id: string, @Body() sutiAdatok: UpdateSutemenyDto) {
     const eredetiSutiID = this.sutik.findIndex(suti => suti.id == parseInt(id));
+    if(eredetiSutiID == -1) throw new NotFoundException("Nem letezik ez a suti!");
+    
     const eredetiSuti = this.sutik[eredetiSutiID];
-
     const ujsuti: Sutemeny = {
       ...eredetiSuti,
       ...sutiAdatok,
@@ -107,9 +108,6 @@ export class AppController {
 
   @Post('ujSutiGyors')
   ujSutiGyors(@Body() ujSutiAdatok: CreateSutemenyDto){
-    if(ujSutiAdatok.nev.length == 0 || typeof ujSutiAdatok.nev != 'string'){
-      throw new BadRequestException("Nem megfelelo suti nev!");
-    }
 
     const ujSuti: Sutemeny = {
       ...ujSutiAdatok,
